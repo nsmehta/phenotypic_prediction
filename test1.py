@@ -36,45 +36,9 @@ if __name__=='__main__':
                     if filename == 'quant.sf':
                         data = pd.read_csv(roots+'/'+filename, sep='\t',header = 0,dtype='unicode')
                         data.to_csv(output_path+'/'+output_filename+'.csv', index=False)
-                        #with codecs.open(roots+'\\'+filename, "r",encoding='utf-8', errors='ignore') as file_name:
-                        #    text=file_name.read()
 
                         data = pd.read_csv(output_path+'/'+output_filename+'.csv', usecols=colnames1,converters={'Name':str,'TPM':float})
-                        #data = data.rename(columns={'TPM': 'TPM_2'})
-                        #metadata.set_index('Name').join(data.set_index('Name'))
-                        #result.append(metadata)
-                        #metadata.join(data, lsuffix='_metadata', rsuffix='_data')
-                        #print metadata.head()
-
-                #print result
-                #f_matrix=pd.concat(result,join='inner')
-
-
-#data = pd.read_csv(roots+'\\'+'ERR188021.csv', names=colnames)
-
-    """
-    Name = data.Name.tolist()
-    Length = data.Length.tolist()
-    EffectiveLength = data.EffectiveLength.tolist()
-    NumReads=data.NumReads.tolist()
-    """
-
-    #TPM=data.TPM.tolist()
-    #metadata.join(data, on='Name', lsuffix='_left', rsuffix='_right')
-    # frames = [data, metadata]
-    # result = pd.concat(frames)
-    # print result
 
     data = data.merge(metadata, on='Name', how='inner')
     print data.head()
     print metadata.head()
-    #temp_dict = data[ colnames1 ].to_dict( orient = 'records' )
-    #print temp_dict
-    """vec = DictVectorizer(sparse=False,dtype=float)
-    vec.fit_transform(temp_dict)
-    x = np.array(Length)
-    y = np.array(TPM)
-    #print x
-    plt.scatter(x, y)
-    plt.savefig('test.png', dpi=200)
-    """
