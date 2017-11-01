@@ -88,7 +88,7 @@ for index, row in test.iterrows():
     # actual_label.append(row[-2])
     print "Actual label", row[-2]
 
-for pred_val in clf.predict(test[features]):
+for pred_val in clf.predict(train[features]):
     # pred_label.append(pred_val)
     print "Pred label",pred_val
 
