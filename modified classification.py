@@ -6,6 +6,7 @@ from collections import defaultdict
 import sys
 from sklearn.feature_extraction import DictVectorizer
 import os
+from os import listdir
 from scipy.cluster.hierarchy import ward, dendrogram,linkage,fcluster,cophenet,distance
 import scipy.cluster.hierarchy as hier
 from sklearn.ensemble import RandomForestClassifier
@@ -18,7 +19,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.decomposition import PCA
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.feature_selection import SelectFromModel
-
+import make_csv
 
 def prediction_with_random_forest(df):
     X_train, X_test, y_train, y_test = train_test_split(df.iloc[:, 1:-1], df.iloc[:, -1], test_size = 0.30, random_state = 0)
@@ -27,14 +28,30 @@ def prediction_with_random_forest(df):
 
 def prediction_with_tree_classifier(df):
     clf = ExtraTreesClassifier()
-    clf = clf.fit(df.iloc[:, 1:-1],df.iloc[:, -1] )
+    clf = clf.fit(df.iloc[:, 1:-1],df.iloc[:, -1])
     clf.feature_importances_
-    model = SelectFromModel(clf, threshold="median", prefit=True)
+    model = SelectFromModel(clf, threshold="mean", prefit=True)
     X_new = model.transform(df.iloc[:, 1:-1])
+    print df.iloc[:, 1:-1].shape
     print X_new.shape
 
     X_train, X_test, y_train, y_test = train_test_split(X_new, df.iloc[:, -1], test_size = 0.30, random_state = 0)
     random_forest_classifier(X_train, y_train, X_test, y_test)
+
+
+def prediction_with_tree_classifier_split(df):
+    X_train, X_test, y_train, y_test = train_test_split(df.iloc[:, 1:-1], df.iloc[:, -1], test_size = 0.30, random_state = 0)
+    clf = ExtraTreesClassifier()
+    clf = clf.fit(X_train, y_train)
+    clf.feature_importances_
+    
+    model = SelectFromModel(clf, threshold="mean", prefit=True)
+    X_train_new = model.transform(X_train)
+    print X_train_new.shape
+    X_test_new = model.transform(X_test)
+    print X_test_new.shape
+
+    random_forest_classifier(X_train_new, y_train, X_test_new, y_test)
 
 
 def random_forest_classifier(X_train, y_train, X_test, y_test):
@@ -43,44 +60,48 @@ def random_forest_classifier(X_train, y_train, X_test, y_test):
     preds = clf.predict(X_test)
     print "F1 score",f1_score(y_test,preds ,average='macro')
     scores=cross_val_score(clf,df.iloc[:, 1:-1], df.iloc[:, -1],cv=5,scoring='f1_macro')
-    print "F1scores with 5 fold cross validation", scores
-    print " mean of score i.e accuracy", scores.mean()
+    print "F1 scores with 5 fold cross validation", scores
+    print "mean of score i.e accuracy", scores.mean()
     print "accuracy score without k-fold", accuracy_score(preds,y_test)
 
 
-
 if __name__=='__main__':
+    raw_path_string = raw_input("Enter path where data is located (Location of accession number dirs): ")
+    csv_path = raw_input("Enter path of directory to store csv files: ")
+    train_path = raw_input("Enter path of train csv file (Path upto p1_train.csv): ")
+
+
+    make_csv.make_csv_files(raw_path_string, csv_path)
+    
     colnames1 = ['TPM']
+    slash = "/"
+    classifier_input = list()
+    
+    label_dict = {}
+        
+    train_data = pd.read_csv(train_path, sep=',', header=0, dtype='unicode')
+    for i, row in train_data.iterrows():        
+        label_dict[row[0]] = row[1]
 
     classifier_input = list()
 
-    raw_path_string = raw_input("Enter Raw Path:")
-    output_path = raw_input("Enter Output Path:")
-    train_path = raw_input("Enter path of training data:")
+    print "Starting reading csv files"
+    files = listdir(csv_path)
+    for file in files:
+        print csv_path + slash + file
+        name = file.split('.')[0]
+        data = pd.read_csv(csv_path + slash + file, usecols=colnames1,converters={'TPM': float})
+        data_list = [file] + data.TPM.tolist()
+        
+        classifier_label = label_dict[name]
+        data_list = data_list + [classifier_label]
+        classifier_input.append(data_list)
 
-    split_on_string = "/"
-    raw_path = [raw_path_string]
-
-    train_data = pd.read_csv(train_path, sep=',', header=0, dtype='unicode')
-
-    for path in raw_path:
-        for roots,dir,files in os.walk(path):
-            directories = roots.split(split_on_string)
-            directory_name = directories[-1]
-            output_filename = directories[-2]
-            if directory_name == "bias":
-                for filename in files:
-                    if filename == 'quant.sf':
-                        data = pd.read_csv(roots + split_on_string + filename, sep='\t', header=0, dtype='unicode')
-                        data.to_csv(output_path + split_on_string + output_filename + '.csv', index=False)
-                        data = pd.read_csv(output_path + split_on_string + output_filename + '.csv', usecols=colnames1,converters={'TPM': float})                        
-                        # data = data[:, 3]
-                        data_list = [output_filename] + data.TPM.tolist()
-                        classifier_label =train_data[train_data['accession'].isin([output_filename])]["label"].tolist()[0]
-                        data_list = data_list + [classifier_label]
-                        classifier_input.append(data_list[:])
-
+print "Read all csv files, creating dataframe"
 
 df = pd.DataFrame(classifier_input)
-#prediction_with_random_forest(df)
-prediction_with_tree_classifier(df)
+print "Created dataframe"
+
+# prediction_with_random_forest(df)
+# prediction_with_tree_classifier(df)
+prediction_with_tree_classifier_split(df)
