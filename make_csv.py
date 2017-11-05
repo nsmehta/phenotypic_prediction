@@ -7,11 +7,11 @@ def make_csv_files(raw_path_string, csv_path):
 
     if not os.path.exists(csv_path):
         os.makedirs(csv_path)
-    elif os.path.exists(csv_path) and len(list(csv_path)) > 0:
+    elif os.path.exists(csv_path) and len(listdir(csv_path)) > 0:
         print "Some csv files already present. Not creating again."
         return
 
-    slash = "/"    
+    slash = "\\"
 
     columns = ['Name', 'TPM']
     input_files = listdir(raw_path_string)
