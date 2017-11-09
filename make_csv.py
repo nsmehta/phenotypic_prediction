@@ -2,9 +2,11 @@ import os
 import pandas as pd
 from os import listdir
 
+# create csv files from quant.sf files, keep only Name and TPM columns
 def make_csv_files(raw_path_string, csv_path):    
     print "Starting creating of csv files"
 
+    # if directory for storing csv files does not exist, create it
     if not os.path.exists(csv_path):
         os.makedirs(csv_path)
     elif os.path.exists(csv_path) and len(listdir(csv_path)) > 0:
@@ -13,6 +15,7 @@ def make_csv_files(raw_path_string, csv_path):
 
     slash = "\\"
 
+    # create csv files
     columns = ['Name', 'TPM']
     input_files = listdir(raw_path_string)
     for file in input_files:
