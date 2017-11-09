@@ -71,7 +71,7 @@ def random_forest_classifier(X_train, y_test):
     print "F1 score", scores.mean()
 
     # accuracy
-    scores = cross_val_score(clf, X_train, y_test, cv=10, scoring='accuracy')
+    scores = cross_val_score(clf, X_train, y_test, cv=5, scoring='accuracy')
     print "accuracy scores with 5 fold cross validation", scores
     print "mean of accuracy", scores.mean()
 
