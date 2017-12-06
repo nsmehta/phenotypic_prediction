@@ -51,28 +51,37 @@ def prediction_with_Kbest(df):
 
 
 # method for selecting features with extra trees classifier
-def prediction_with_tree_classifier(df):
+def prediction_with_tree_classifier(df, option):
     clf = ExtraTreesClassifier(random_state=0)
-    clf = clf.fit(df.iloc[:, 1:-1],df.iloc[:, -1])
+    to_predict = None
+    if option == 0: # to predict population
+	y = df.iloc[:, -2]
+	to_predict = 'Population'
+    else: # to predict sequence center
+	y = df.iloc[:, -1]
+	to_predict = 'Sequence center'
+
+    clf = clf.fit(df.iloc[:, 1:-2], y)
     model = SelectFromModel(clf, threshold="mean", prefit=True)
-    X_new = model.transform(df.iloc[:, 1:-1])
+    X_new = model.transform(df.iloc[:, 1:-2])
 
     # perform classification using the selected features
-    random_forest_classifier(X_new, df.iloc[:, -1])
+    random_forest_classifier(X_new, y, to_predict)
 
 
 # classify the data to predict labels using random forest classifier
-def random_forest_classifier(X_train, y_test):
-    clf = RandomForestClassifier(n_jobs=-1, random_state=0, n_estimators= 10, max_features='auto', criterion="gini")
+def random_forest_classifier(X_train, y_test, to_predict):
+    # changed the max_features to None
+    clf = RandomForestClassifier(n_jobs=-1, random_state=0, n_estimators= 10, max_features=None, criterion="gini")
 
     # f1 score
     scores = cross_val_score(clf, X_train, y_test, cv=5, scoring='f1_macro')
-    print "F1 scores with 5 fold cross validation", scores
+    print "F1 scores with 5 fold cross validation for ", to_predict, scores
     print "F1 score", scores.mean()
 
     # accuracy
     scores = cross_val_score(clf, X_train, y_test, cv=5, scoring='accuracy')
-    print "accuracy scores with 5 fold cross validation", scores
+    print "accuracy scores with 5 fold cross validation for ", to_predict, scores
     print "mean of accuracy", scores.mean()
 
 
@@ -80,10 +89,10 @@ if __name__=='__main__':
     raw_path_string = raw_input("Enter path where data is located (Location of accession number dirs): ")
     csv_path = raw_input("Enter path of directory to store csv files: ")
     train_path = raw_input("Enter path of train csv file (Path upto p1_train.csv): ")
-    slash = "\\"
+    slash = "/"
 
     # make csv files from quant.sf files
-    make_csv.make_csv_files(raw_path_string + slash, csv_path)
+    make_csv.make_csv_files(raw_path_string + slash, csv_path, slash)
     
     colnames1 = ['TPM']
     classifier_input = list()
@@ -92,7 +101,7 @@ if __name__=='__main__':
     # store the labels from train file in a dictionary
     train_data = pd.read_csv(train_path, sep=',', header=0, dtype='unicode')
     for i, row in train_data.iterrows():        
-        label_dict[row[0]] = row[1]
+        label_dict[row[0]] = (row[1], row[2])
 
     classifier_input = list()
 
@@ -105,11 +114,12 @@ if __name__=='__main__':
     files = listdir(csv_path)
     for file in files:
         name = file.split('.')[0]
-        data = pd.read_csv(csv_path + slash + file, usecols=colnames1,converters={'TPM': float})
+        data = pd.read_csv(csv_path + slash + file, usecols=colnames1, converters={'TPM': float})
         data_list = [file] + data.TPM.tolist()
-        
-        classifier_label = label_dict[name]
-        data_list = data_list + [classifier_label]
+
+        classifier_population = label_dict[name][0]
+	classifier_sequence_center = label_dict[name][1]
+        data_list = data_list + [classifier_population, classifier_sequence_center]
         classifier_input.append(data_list)
 
 print "Read all csv files, creating dataframe"
@@ -131,7 +141,8 @@ print "Created dataframe"
 print datetime.datetime.now()
 
 # execute classifier
-prediction_with_tree_classifier(df)
+prediction_with_tree_classifier(df, 0) # 0 for predicting population
+prediction_with_tree_classifier(df, 1) # 1 for predicting sequence center
 # prediction_with_pca(df)
 # prediction_with_Kbest(df)
 print datetime.datetime.now()
