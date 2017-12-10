@@ -26,6 +26,45 @@ import make_csv
 import datetime
 
 
+def crossval(df):
+    stacked = df.iloc[:, -2:].stack()
+    df.iloc[:, -2:] = pd.Series(stacked.factorize()[0], index=stacked.index).unstack()
+    df = np.array_split(df, 5)
+    f1_score1_p = []
+    accuracy_p = []
+    f1_score1_c=[]
+    accuracy_c=[]
+    for i in range(len(df)):
+        test = pd.DataFrame(df[i])
+        train = df[:i] + df[i + 1:]
+        train = pd.concat(train)
+        X_train = train.iloc[:, 1:-2]
+        y_train = train.iloc[:, -2:]
+        X_test = test.iloc[:, 1:-2]
+        y_test =test.iloc[:, -2:]
+        clf = tree.DecisionTreeClassifier(random_state=0, max_features=None, criterion='gini', splitter='best',
+                                          max_depth=None, min_samples_split=10, min_samples_leaf=5)
+        fit_model = clf.fit(X_train, y_train)
+        output_pred= fit_model.predict(X_test)
+        f1_score1_p.append(f1_score(y_test.iloc[:,0], output_pred[:,0], average='weighted'))
+        accuracy_p.append(accuracy_score(y_test.iloc[:,0], output_pred[:,0]))
+        f1_score1_c.append(f1_score(y_test.iloc[:,1], output_pred[:, 1], average='weighted'))
+        accuracy_c.append(accuracy_score(y_test.iloc[:,1], output_pred[:,1]))
+
+    print "F1 scores with 5 fold cross validation for Population",f1_score1_p
+    print "accuracy scores with 5 fold cross validation for Population", accuracy_p
+    f1 = np.mean(f1_score1_p)
+    accuracy1 = np.mean(accuracy_p)
+    print "F1 Score p", f1
+    print "accuracy P", accuracy1
+
+    print "F1 scores with 5 fold cross validation for Seq C", f1_score1_c
+    print "accuracy scores with 5 fold cross validation for Seq C", accuracy_c
+    f1_c = np.mean(f1_score1_c)
+    accuracy1_c = np.mean(accuracy_c)
+    print "F1 Score c", f1_c
+    print "accuracy c", accuracy1_c
+
 # method for selecting features with extra trees classifier
 def prediction_with_tree_classifier(df):
     # clf = ExtraTreesClassifier(random_state=0)
@@ -44,7 +83,7 @@ def decision_tree_classifier_multi(X, y_2d):
 
     # clf = tree.DecisionTreeClassifier(random_state=0, max_features=None)
     clf = tree.DecisionTreeClassifier(random_state=0, max_features=None, criterion='gini', splitter='best',
-                                      max_depth=None, min_samples_split=2, min_samples_leaf=5)
+                                      max_depth=None, min_samples_split=10, min_samples_leaf=5)
     fit_model = clf.fit(X_train, y_train)
     output_pred = fit_model.predict(X_test)
     print("Prediction: ", output_pred)
@@ -53,6 +92,7 @@ def decision_tree_classifier_multi(X, y_2d):
     print("F1 score predicted for sequence center w/o cross val",
           f1_score(y_test.iloc[:, 1], output_pred[:, 1], average='weighted'))
 
+    crossval(df)
     # vals = y_2d.stack().drop_duplicates().values
     # b = [x for x in y_2d.stack().drop_duplicates().rank(method='dense')]
     # d1 = dict(zip(b, vals))
@@ -106,7 +146,7 @@ if __name__ == '__main__':
     for file in files:
         name = file.split('.')[0]
         data = pd.read_csv(csv_path + slash + file, usecols=colnames1, converters={'TPM': float,'Length':float})
-        data_list = [file] + data.TPM.tolist()+data.Length.tolist()
+        data_list = [file] + data.TPM.tolist()
 
         classifier_population = label_dict[name][0]
         classifier_sequence_center = label_dict[name][1]
