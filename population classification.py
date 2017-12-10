@@ -24,15 +24,32 @@ from sklearn import tree
 import make_csv
 import datetime
 
-# def prediction_with_pca(df):
-#     nf = 1000
-#     pca = PCA(n_components=nf, svd_solver='full', random_state=0)
-#     # pca.fit(df.iloc[:, 1:-1])
-#
-#     X_new = pca.fit_transform(df.iloc[:, 1:-1])
-#     print X_new.shape
-#     random_forest_classifier(X_new, df.iloc[:, -1])
+def crossval(df):
+    df = np.array_split(df, 5)
+    f1_score1 = []
+    accuracy = []
 
+    for i in range(len(df)):
+        test = pd.DataFrame(df[i])
+        train = df[:i] + df[i + 1:]
+        train = pd.concat(train)
+        X_train = train.iloc[:, 1:-1]
+        y_train = pd.Series.to_frame(train.iloc[:, -1])
+        X_test = test.iloc[:, 1:-1]
+        y_test = pd.Series.to_frame(test.iloc[:, -1])
+        clf = tree.DecisionTreeClassifier(random_state=0, max_features=None, criterion='gini', splitter='best',
+                                          max_depth=None, min_samples_split=10, min_samples_leaf=5)
+        fit_model = clf.fit(X_train, y_train)
+        output_pred = fit_model.predict(X_test)
+        f1_score1.append(f1_score(y_test, output_pred, average='weighted'))
+        accuracy.append(accuracy_score(y_test, output_pred))
+
+    print "F1 scores with 5 fold cross validation for Population",f1_score1
+    print "accuracy scores with 5 fold cross validation for Population", accuracy
+    f1 = np.mean(f1_score1)
+    accuracy1 = np.mean(accuracy)
+    print "F1 Score", f1
+    print "accuracy", accuracy1
 
 # method for predicting only with random forest classifier
 def prediction_with_random_forest(df):
@@ -49,10 +66,9 @@ def prediction_with_tree_classifier(df):
 
     # perform classification using the selected features
     random_forest_classifier(X_new, y)
-    decision_tree_classifier_population(df.iloc[:, 1:-1], y, X_new)
+    decision_tree_classifier_population(df.iloc[:, 1:-1], y, df)
 
     # decision_tree_classifier_multi(df.iloc[:, 1:-2], df.iloc[:, -2:], X_new, to_predict)
-
 
 # classify the data to predict labels using random forest classifier
 def random_forest_classifier(X_train, y_test):
@@ -61,16 +77,16 @@ def random_forest_classifier(X_train, y_test):
 
     # f1 score
     scores = cross_val_score(clf, X_train, y_test, cv=5, scoring='f1_macro')
-    print "F1 scores with 5 fold cross validation for Population ", scores
+    print "F1 scores with 5 fold cross validation for Population RF ", scores
     print "F1 score", scores.mean()
 
     # accuracy
     scores = cross_val_score(clf, X_train, y_test, cv=5, scoring='accuracy')
-    print "accuracy scores with 5 fold cross validation for Population", scores
+    print "accuracy scores with 5 fold cross validation for Population RF", scores
     print "mean of accuracy", scores.mean()
 
 
-def decision_tree_classifier_population(X, y, X_new):
+def decision_tree_classifier_population(X, y,df):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
 
     # clf = tree.DecisionTreeClassifier(random_state=0, max_features=None)
@@ -78,19 +94,19 @@ def decision_tree_classifier_population(X, y, X_new):
                                       min_samples_split=2, min_samples_leaf=5)
     fit_model = clf.fit(X_train, y_train)
     output_pred = fit_model.predict(X_test)
-    print("Prediction: ", output_pred)
-    print("F1 score predicted w/o cross val", f1_score(y_test, output_pred, average='weighted'))
-    # dot_data = tree.export_graphviz(fit_model, out_file=None, filled=True, rounded=True, special_characters=True)
-    # graph = dot_data.Source(dot_data)
-    # graph.render("output_1")
-    # f1 score
+    # print("Prediction: ", output_pred)
+    print("F1 score predicted w/o cross val DT", f1_score(y_test, output_pred, average='weighted'))
+
+
+    crossval(df)
+
     scores = cross_val_score(clf, X, y, cv=5, scoring='f1_macro')
-    print "F1 scores with 5 fold cross validation for Population", scores
+    print "F1 scores with 5 fold cross validation for Population DT", scores
     print "F1 score", scores.mean()
 
     # accuracy
     scores = cross_val_score(clf, X, y, cv=5, scoring='accuracy')
-    print "accuracy scores with 5 fold cross validation for Population", scores
+    print "accuracy scores with 5 fold cross validation for Population DT", scores
     print "mean of accuracy", scores.mean()
 
 if __name__ == '__main__':
@@ -129,6 +145,7 @@ if __name__ == '__main__':
         classifier_population = label_dict[name][0]
         data_list = data_list + [classifier_population]
         classifier_input.append(data_list)
+
 
 print "Read all csv files, creating dataframe"
 print datetime.datetime.now()
