@@ -1,18 +1,21 @@
 from os import listdir
 
-def get_features():
+def get_features(raw_path_string):
 	accession_numbers = {}
 
-	path = '/home/rasika/Documents/Computational Biology/Project/Data/'
+	# path = '/home/rasika/Documents/Computational Biology/Project/Data/'
+	# path = raw_input("Enter path where data is located (Location of accession number dirs): ")
+	path = raw_path_string
 	input_files = listdir(path)
-	slash = '/'
+	# slash = '/'
+	slash = '\\'
 	# ERR188021/bias/aux_info/eq_classes.txt
 
 	for file in input_files:
 		input_file = open(path + slash + file + '/bias/aux_info/eq_classes.txt', 'r')
 		lines = input_file.readlines()
 
-	#	w_file = open('/home/rasika/Documents/Computational Biology/Project/Data/' + file + '/unique_transcripts.txt', 'w')
+		w_file = open('F:\\Computational Biology\\project\\train test\\' + file + '\\unique_transcripts.txt', 'w')
 
 		transcripts = lines[:199327]
 		eq_classes = lines[199327:]
@@ -34,7 +37,7 @@ def get_features():
 
 				# print contents
 				# print unique_transcripts
-	#	w_file.write(str(unique_transcripts))
+		w_file.write(str(unique_transcripts))
 		accession_numbers[file] = unique_transcripts
 
 	return accession_numbers

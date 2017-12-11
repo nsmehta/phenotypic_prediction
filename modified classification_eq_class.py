@@ -91,15 +91,20 @@ if __name__=='__main__':
     # raw_path_string = raw_input("Enter path where data is located (Location of accession number dirs): ")
     # csv_path = raw_input("Enter path of directory to store csv files: ")
     # train_path = raw_input("Enter path of train csv file (Path upto p1_train.csv): ")
-    slash = "/"
-    raw_path_string = '/home/rasika/Documents/Computational Biology/Project/Data'
-    csv_path = '/home/rasika/Documents/Computational Biology/Project/Result'
-    train_path = '/home/rasika/Documents/Computational Biology/Project/p1_train_pop_lab.csv'
+    raw_path_string = 'F:\\Computational Biology\\project\\train test'
+    csv_path = 'F:\\Computational Biology\\project\\Results test'
+    train_path = 'F:\\Computational Biology\\project\\p1_train_pop_lab.csv'
+    slash = "\\"
+    # slash = "/"
+    # raw_path_string = '/home/rasika/Documents/Computational Biology/Project/Data'
+    # csv_path = '/home/rasika/Documents/Computational Biology/Project/Result'
+    # train_path = '/home/rasika/Documents/Computational Biology/Project/p1_train_pop_lab.csv'
+
+    colnames1 = ['Name', 'TPM', 'Length']
 
     # make csv files from quant.sf files
-    make_csv.make_csv_files(raw_path_string + slash, csv_path, slash)
+    make_csv.make_csv_files(raw_path_string + slash, csv_path, slash, colnames1)
     
-    colnames1 = ['Name', 'TPM']
     classifier_input = list()
 
     label_dict = {}
@@ -116,17 +121,33 @@ if __name__=='__main__':
     # create dataframe from all csv files
     # each row corresponds to one accession number and the columns are TPM values of each transcript
 
-    accession_numbers = parse_eq_classes.get_features()
+    # get the parsed equivalence classes data
+    accession_numbers = parse_eq_classes.get_features(raw_path_string)
+    print "Finished processing equivalence class"
+    print datetime.datetime.now()
+
+
     seen = False
     files = listdir(csv_path)
     for file in files:
         name = file.split('.')[0]
         data = pd.read_csv(csv_path + slash + file, usecols=colnames1, converters={'TPM': float})
-        
+        data_list = [file] + data.TPM.tolist() + data.Length.tolist()
+
+        # get the unique transcripts for each accession number
         unique_transcripts = accession_numbers[name]
         transcripts = list(unique_transcripts.keys())
+        print type(transcripts)
+        print transcripts[0]
+        # exit(0)
         # print(data.head())
         # print(data.TPM.tolist())
+        # print(data_list[0])
+        # exit(0)
+
+        # traverse the
+
+
         tpms = []
 
         # tpms.append(data['TPM'].where(data['Name'] in transcripts))
@@ -134,6 +155,7 @@ if __name__=='__main__':
         # tpms.append(data.loc[data['Name'].isin(transcripts)])
         # print('tpms :: ', len(tpms))
 
+        # dataframe of unique transcripts
         data = pd.DataFrame([unique_transcripts])
         print(data.head(1))
         data_list = [name] + data[:, ].tolist()
@@ -146,6 +168,8 @@ if __name__=='__main__':
         classifier_sequence_center = label_dict[name][1]
         data_list = data_list + [classifier_population, classifier_sequence_center]
         classifier_input.append(data_list)
+
+
 
 
 print "Read all csv files, creating dataframe"
