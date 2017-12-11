@@ -25,21 +25,18 @@ import make_csv
 import datetime
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from modified_classification_eq_class import eq_classes
 
 
 def prediction_with_pca(df):
     print df.shape
     sc = StandardScaler()
     X_std = sc.fit_transform(df.iloc[:, 1:-1])
-    pca = PCA(n_components=5000, svd_solver='auto', random_state=0)
+    pca = PCA(n_components=1000, svd_solver='auto', random_state=0)
     # pca.fit(df.iloc[:, 1:-1])
     y = df.iloc[:, -1]
     y_numerical = pd.factorize(y)[0]
     X_new = pca.fit_transform(X_std)
-    print "pca comp",pca.components_
-    print "pca variance",pca.explained_variance_
-    print X_new.shape,type(X_new)
-    print type(y_numerical),y_numerical.shape
     random_forest_classifier(X_new, df.iloc[:, -1])
     decision_tree_classifier_population(X_new, y_numerical)
 
@@ -52,10 +49,10 @@ def crossval(df):
         test = pd.DataFrame(df[i])
         train = df[:i] + df[i + 1:]
         train = pd.concat(train)
-        X_train = train.iloc[:, 0:-1]
-        y_train = pd.Series.to_frame(train.iloc[:, -1])
-        X_test = test.iloc[:, 0:-1]
-        y_test = pd.Series.to_frame(test.iloc[:, -1])
+        X_train = train.iloc[:, :-1]
+        y_train = train.iloc[:, -1]
+        X_test = test.iloc[:, :-1]
+        y_test = test.iloc[:, -1]
         clf = tree.DecisionTreeClassifier(random_state=0, max_features=None, criterion='gini', splitter='best',
                                           max_depth=None, min_samples_split=2, min_samples_leaf=5,class_weight='balanced')
         fit_model = clf.fit(X_train, y_train)
@@ -120,15 +117,7 @@ def decision_tree_classifier_population(X, y):
     output_pred = fit_model.predict(X_test)
     # print("Prediction: ", output_pred)
     print("F1 score predicted w/o cross val DT", f1_score(y_test, output_pred, average='weighted'))
-    b = np.array([y])
-    X = np.hstack((X,b.T))
-    df_new = pd.DataFrame(X)
-    print df_new.shape
-    #print "new data frame after pca sendind to my cross val"
-    #print df_new.head();
-    crossval(df_new)
-
-    scores = cross_val_score(clf, X, y, cv=5, scoring='f1_weighted')
+    scores = cross_val_score(clf, X, y, cv=5, scoring='f1_macro')
     print "F1 scores with 5 fold cross validation for Population DT", scores
     print "F1 score", scores.mean()
 
@@ -137,6 +126,13 @@ def decision_tree_classifier_population(X, y):
     print "accuracy scores with 5 fold cross validation for Population DT", scores
     print "mean of accuracy", scores.mean()
 
+    b = np.array([y])
+    X = np.hstack((X,b.T))
+    df_new = pd.DataFrame(X)
+
+    crossval(df_new)
+
+    return X, y
 if __name__ == '__main__':
     # raw_path_string = raw_input("Enter path where data is located (Location of accession number dirs): ")
     # csv_path = raw_input("Enter path of directory to store csv files: ")
@@ -148,41 +144,50 @@ if __name__ == '__main__':
 
 
     # make csv files from quant.sf files
-    colnames1 = ['TPM','Length']
-    make_csv.make_csv_files(raw_path_string + slash, csv_path, slash, ['Name'] + colnames1)
-
-    classifier_input = list()
-
-    label_dict = {}
-    # store the labels from train file in a dictionary
-    train_data = pd.read_csv(train_path, sep=',', header=0, dtype='unicode')
-    for i, row in train_data.iterrows():
-        label_dict[row[0]] = (row[1], row[2])
-
-    classifier_input = list()
-
-    print "Starting reading csv files"
-    print datetime.datetime.now()
-    # Reading the data from csv files and creating a data list of acession number tpm and length
-    files = listdir(csv_path)
-    for file in files:
-        name = file.split('.')[0]
-        data = pd.read_csv(csv_path + slash + file, usecols=colnames1, converters={'TPM': float,'Length':float})
-        data_list = [name] + data.TPM.tolist() + data.Length.tolist()
-    # also adding label population to the data list
-        classifier_population = label_dict[name][0]
-        data_list = data_list + [classifier_population]
-        classifier_input.append(data_list)
-
-
-print "Read all csv files, creating dataframe"
-print datetime.datetime.now()
-
-df = pd.DataFrame(classifier_input)
-
-print "Created dataframe"
-print datetime.datetime.now()
+#     colnames1 = ['TPM','Length']
+#     make_csv.make_csv_files(raw_path_string + slash, csv_path, slash, ['Name'] + colnames1)
+#
+#     classifier_input = list()
+#
+#     label_dict = {}
+#     # store the labels from train file in a dictionary
+#     train_data = pd.read_csv(train_path, sep=',', header=0, dtype='unicode')
+#     for i, row in train_data.iterrows():
+#         label_dict[row[0]] = (row[1], row[2])
+#
+#     classifier_input = list()
+#
+#     print "Starting reading csv files"
+#     print datetime.datetime.now()
+#     # Reading the data from csv files and creating a data list of acession number tpm and length
+#     files = listdir(csv_path)
+#     for file in files:
+#         name = file.split('.')[0]
+#         data = pd.read_csv(csv_path + slash + file, usecols=colnames1, converters={'TPM': float})
+#         data_list = [name] + data.TPM.tolist()
+#     # also adding label population to the data list
+#         classifier_population = label_dict[name][0]
+#         data_list = data_list + [classifier_population]
+#         classifier_input.append(data_list)
+#
+#
+# print "Read all csv files, creating dataframe"
+# print datetime.datetime.now()
+#
+# df = pd.DataFrame(classifier_input)
+#
+# print "Created dataframe"
+# print datetime.datetime.now()
 
 #prediction_with_tree_classifier(df)
+df=eq_classes(raw_path_string, csv_path, train_path, slash)
 prediction_with_pca(df)
+#b = np.array([y])
+#y = np.transpose(np.array(y))
+#X = np.array(X)
+#X = np.hstack((X, b.T))
+#X = pd.concat([X, y], axis = 1)
+#X = np.hstack((X,b.T))
+    #df_new = pd.DataFrame(X)
+#crossval(X)
 print datetime.datetime.now()
