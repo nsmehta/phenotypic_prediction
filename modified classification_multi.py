@@ -43,7 +43,7 @@ def crossval(df):
         X_test = test.iloc[:, 1:-2]
         y_test =test.iloc[:, -2:]
         clf = tree.DecisionTreeClassifier(random_state=0, max_features=None, criterion='gini', splitter='best',
-                                          max_depth=None, min_samples_split=10, min_samples_leaf=5)
+                                          max_depth=None, min_samples_split=2, min_samples_leaf=5)
         fit_model = clf.fit(X_train, y_train)
         output_pred= fit_model.predict(X_test)
         f1_score1_p.append(f1_score(y_test.iloc[:,0], output_pred[:,0], average='weighted'))
@@ -67,11 +67,6 @@ def crossval(df):
 
 # method for selecting features with extra trees classifier
 def prediction_with_tree_classifier(df):
-    # clf = ExtraTreesClassifier(random_state=0)
-    # clf = clf.fit(df.iloc[:, 1:-2], y)
-    # model = SelectFromModel(clf, threshold="mean", prefit=True)
-    # X_new = model.transform(df.iloc[:, 1:-2])
-
     # perform classification using the selected features
     decision_tree_classifier_multi(df.iloc[:, 1:-2], df.iloc[:, -2:])
 
@@ -142,12 +137,13 @@ if __name__ == '__main__':
     # create dataframe from all csv files
     # each row corresponds to one accession number and the columns are TPM values of each transcript
 
+    # Reading the data from csv files and creating a data list of acession number tpm and length
     files = listdir(csv_path)
     for file in files:
         name = file.split('.')[0]
         data = pd.read_csv(csv_path + slash + file, usecols=colnames1, converters={'TPM': float,'Length':float})
-        data_list = [file] + data.TPM.tolist()
-
+        data_list = [file] + data.TPM.tolist()+ data.Length.tolist()
+    #Create label popluation and sequence center
         classifier_population = label_dict[name][0]
         classifier_sequence_center = label_dict[name][1]
         data_list = data_list + [classifier_population, classifier_sequence_center]

@@ -38,7 +38,7 @@ def crossval(df):
         X_test = test.iloc[:, 1:-1]
         y_test = pd.Series.to_frame(test.iloc[:, -1])
         clf = tree.DecisionTreeClassifier(random_state=0, max_features=None, criterion='gini', splitter='best',
-                                          max_depth=None, min_samples_split=10, min_samples_leaf=5)
+                                          max_depth=None, min_samples_split=2, min_samples_leaf=5)
         fit_model = clf.fit(X_train, y_train)
         output_pred = fit_model.predict(X_test)
         f1_score1.append(f1_score(y_test, output_pred, average='weighted'))
@@ -58,15 +58,20 @@ def prediction_with_random_forest(df):
 
 # method for selecting features with extra trees classifier
 def prediction_with_tree_classifier(df):
+    #Creating a clf and creating a data frame y of only labels and fitting the model using dataframe leavinng first
+    # and last column and passing the label df
     clf = ExtraTreesClassifier(random_state=0)
     y = df.iloc[:, -1]
-    clf = clf.fit(df.iloc[:, 1:-1], y)
+    y_numerical = pd.factorize(y)[0]
+    clf = clf.fit(df.iloc[:, 1:-1], y_numerical)
     model = SelectFromModel(clf, threshold="mean", prefit=True)
     X_new = model.transform(df.iloc[:, 1:-1])
 
     # perform classification using the selected features
-    random_forest_classifier(X_new, y)
-    decision_tree_classifier_population(df.iloc[:, 1:-1], y, df)
+
+    #call to RandomForest and decision tree classifier
+    random_forest_classifier(X_new, y_numerical)
+    decision_tree_classifier_population(df.iloc[:, 1:-1], y_numerical, df)
 
     # decision_tree_classifier_multi(df.iloc[:, 1:-2], df.iloc[:, -2:], X_new, to_predict)
 
@@ -135,13 +140,13 @@ if __name__ == '__main__':
 
     print "Starting reading csv files"
     print datetime.datetime.now()
-
+    # Reading the data from csv files and creating a data list of acession number tpm and length
     files = listdir(csv_path)
     for file in files:
         name = file.split('.')[0]
         data = pd.read_csv(csv_path + slash + file, usecols=colnames1, converters={'TPM': float,'Length':float})
-        data_list = [file] + data.TPM.tolist()+data.Length.tolist()
-
+        data_list = [name] + data.TPM.tolist() + data.Length.tolist()
+    # also adding label population to the data list
         classifier_population = label_dict[name][0]
         data_list = data_list + [classifier_population]
         classifier_input.append(data_list)
