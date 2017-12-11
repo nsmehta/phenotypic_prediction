@@ -67,11 +67,6 @@ def crossval(df):
 
 # method for selecting features with extra trees classifier
 def prediction_with_tree_classifier(df):
-    # clf = ExtraTreesClassifier(random_state=0)
-    # clf = clf.fit(df.iloc[:, 1:-2], y)
-    # model = SelectFromModel(clf, threshold="mean", prefit=True)
-    # X_new = model.transform(df.iloc[:, 1:-2])
-
     # perform classification using the selected features
     decision_tree_classifier_multi(df.iloc[:, 1:-2], df.iloc[:, -2:])
 
@@ -142,12 +137,14 @@ if __name__ == '__main__':
     # create dataframe from all csv files
     # each row corresponds to one accession number and the columns are TPM values of each transcript
 
+    # Reading the data from csv files and creating a data list of acession number tpm and length
     files = listdir(csv_path)
     for file in files:
         name = file.split('.')[0]
         data = pd.read_csv(csv_path + slash + file, usecols=colnames1, converters={'TPM': float,'Length':float})
-        data_list = [file] + data.TPM.tolist() + data.Length.tolist()
+        data_list = [file] + data.TPM.tolist()+ data.Length.tolist()
 
+        #Create label population and sequence center
         classifier_population = label_dict[name][0]
         classifier_sequence_center = label_dict[name][1]
         data_list = data_list + [classifier_population, classifier_sequence_center]
