@@ -112,7 +112,7 @@ def eq_classes(raw_path_string, csv_path, train_path, slash, type):
     # each row corresponds to one accession number and the columns are TPM values of each transcript
 
     # get the parsed equivalence classes data
-    accession_numbers = parse_eq_classes.get_features(raw_path_string)
+    accession_numbers = parse_eq_classes.get_features(raw_path_string, slash)
     print "Finished processing equivalence class"
     print datetime.datetime.now()
 
@@ -124,13 +124,17 @@ def eq_classes(raw_path_string, csv_path, train_path, slash, type):
 
         # get the unique transcripts for each accession number
         unique_transcripts = accession_numbers[name]
+
         df = pd.DataFrame(list(unique_transcripts.iteritems()), columns=['Name', 'Count'])
-        data.merge(df, on='Name')
-        transcripts = list(unique_transcripts.keys())
+        data = data.merge(df, on='Name')
+
+        if not seen:
+            # print list(unique_transcripts.iteritems())
+            print(data.shape)
+            print(data)
+            seen = True
 
         data_list = [file] + data.Count.tolist() + data.TPM.tolist() + data.Length.tolist()
-        tpms = []
-
 
         classifier_population = label_dict[name][0]
         classifier_sequence_center = label_dict[name][1]
@@ -192,7 +196,7 @@ if __name__ == '__main__':
     print "Finished processing equivalence class"
     print datetime.datetime.now()
 
-    seen = False
+    # seen = False
     files = listdir(csv_path)
     for file in files:
         name = file.split('.')[0]
@@ -205,7 +209,6 @@ if __name__ == '__main__':
         transcripts = list(unique_transcripts.keys())
 
         data_list = [file] + df.Count.tolist() + data.TPM.tolist() + data.Length.tolist()
-        tpms = []
 
         classifier_population = label_dict[name][0]
         classifier_sequence_center = label_dict[name][1]
