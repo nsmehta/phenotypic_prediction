@@ -125,9 +125,13 @@ def eq_classes(raw_path_string, csv_path, train_path, slash, type):
         # get the unique transcripts for each accession number
         unique_transcripts = accession_numbers[name]
         df = pd.DataFrame(list(unique_transcripts.iteritems()), columns=['Name', 'Count'])
-        data.merge(df, on='Name')
+        # print "df.head ="
+        # print df.head()
+        data = data.merge(df, on='Name')
         transcripts = list(unique_transcripts.keys())
-
+        # print "data.head ="
+        # print data.head()
+        # exit(0)
         data_list = [file] + data.Count.tolist() + data.TPM.tolist() + data.Length.tolist()
         tpms = []
 
