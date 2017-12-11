@@ -3,7 +3,7 @@ import pandas as pd
 from os import listdir
 
 # create csv files from quant.sf files, keep only Name and TPM columns
-def make_csv_files(raw_path_string, csv_path, slash):
+def make_csv_files(raw_path_string, csv_path, slash,columns):
     print "Starting creating of csv files"
 
     # if directory for storing csv files does not exist, create it
@@ -14,7 +14,7 @@ def make_csv_files(raw_path_string, csv_path, slash):
         return
 
     # create csv files
-    columns = ['Name', 'TPM']
+    #columns = ['Name', 'TPM','Length']
     input_files = listdir(raw_path_string)
     for file in input_files:
         data = pd.read_csv(raw_path_string + file + slash + 'bias' + slash + 'quant.sf', sep='\t', header=0, dtype='unicode')
