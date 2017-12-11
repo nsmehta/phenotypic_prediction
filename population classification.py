@@ -23,6 +23,25 @@ from sklearn.feature_selection import SelectKBest
 from sklearn import tree
 import make_csv
 import datetime
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+
+
+def prediction_with_pca(df):
+    print df.shape
+    sc = StandardScaler()
+    X_std = sc.fit_transform(df.iloc[:, 1:-1])
+    pca = PCA(n_components=5000, svd_solver='auto', random_state=0)
+    # pca.fit(df.iloc[:, 1:-1])
+    y = df.iloc[:, -1]
+    y_numerical = pd.factorize(y)[0]
+    X_new = pca.fit_transform(X_std)
+    print "pca comp",pca.components_
+    print "pca variance",pca.explained_variance_
+    print X_new.shape,type(X_new)
+    print type(y_numerical),y_numerical.shape
+    random_forest_classifier(X_new, df.iloc[:, -1])
+    decision_tree_classifier_population(X_new, y_numerical)
 
 def crossval(df):
     df = np.array_split(df, 5)
@@ -33,12 +52,12 @@ def crossval(df):
         test = pd.DataFrame(df[i])
         train = df[:i] + df[i + 1:]
         train = pd.concat(train)
-        X_train = train.iloc[:, 1:-1]
+        X_train = train.iloc[:, 0:-1]
         y_train = pd.Series.to_frame(train.iloc[:, -1])
-        X_test = test.iloc[:, 1:-1]
+        X_test = test.iloc[:, 0:-1]
         y_test = pd.Series.to_frame(test.iloc[:, -1])
         clf = tree.DecisionTreeClassifier(random_state=0, max_features=None, criterion='gini', splitter='best',
-                                          max_depth=None, min_samples_split=2, min_samples_leaf=5)
+                                          max_depth=None, min_samples_split=2, min_samples_leaf=5,class_weight='balanced')
         fit_model = clf.fit(X_train, y_train)
         output_pred = fit_model.predict(X_test)
         f1_score1.append(f1_score(y_test, output_pred, average='weighted'))
@@ -67,11 +86,11 @@ def prediction_with_tree_classifier(df):
     model = SelectFromModel(clf, threshold="mean", prefit=True)
     X_new = model.transform(df.iloc[:, 1:-1])
 
-    # perform classification using the selected features
+    # perform classification using the selected featureswvvwbbbbbbbbb
 
     #call to RandomForest and decision tree classifier
     random_forest_classifier(X_new, y_numerical)
-    decision_tree_classifier_population(df.iloc[:, 1:-1], y_numerical, df)
+    decision_tree_classifier_population(df.iloc[:, 1:-1], y_numerical)
 
     # decision_tree_classifier_multi(df.iloc[:, 1:-2], df.iloc[:, -2:], X_new, to_predict)
 
@@ -91,21 +110,25 @@ def random_forest_classifier(X_train, y_test):
     print "mean of accuracy", scores.mean()
 
 
-def decision_tree_classifier_population(X, y,df):
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
+def decision_tree_classifier_population(X, y):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
     # clf = tree.DecisionTreeClassifier(random_state=0, max_features=None)
     clf = tree.DecisionTreeClassifier(max_features=None, criterion='gini', splitter='best', max_depth=None,
-                                      min_samples_split=2, min_samples_leaf=5)
+                                      min_samples_split=2, min_samples_leaf=5,class_weight='balanced')
     fit_model = clf.fit(X_train, y_train)
     output_pred = fit_model.predict(X_test)
     # print("Prediction: ", output_pred)
     print("F1 score predicted w/o cross val DT", f1_score(y_test, output_pred, average='weighted'))
+    b = np.array([y])
+    X = np.hstack((X,b.T))
+    df_new = pd.DataFrame(X)
+    print df_new.shape
+    #print "new data frame after pca sendind to my cross val"
+    #print df_new.head();
+    crossval(df_new)
 
-
-    crossval(df)
-
-    scores = cross_val_score(clf, X, y, cv=5, scoring='f1_macro')
+    scores = cross_val_score(clf, X, y, cv=5, scoring='f1_weighted')
     print "F1 scores with 5 fold cross validation for Population DT", scores
     print "F1 score", scores.mean()
 
@@ -115,13 +138,13 @@ def decision_tree_classifier_population(X, y,df):
     print "mean of accuracy", scores.mean()
 
 if __name__ == '__main__':
-    raw_path_string = raw_input("Enter path where data is located (Location of accession number dirs): ")
-    csv_path = raw_input("Enter path of directory to store csv files: ")
-    train_path = raw_input("Enter path of train csv file (Path upto p1_train.csv): ")
+    # raw_path_string = raw_input("Enter path where data is located (Location of accession number dirs): ")
+    # csv_path = raw_input("Enter path of directory to store csv files: ")
+    # train_path = raw_input("Enter path of train csv file (Path upto p1_train.csv): ")
     slash = "\\"
-    # raw_path_string = '/home/rasika/Documents/Computational Biology/Project/Data'
-    # csv_path = '/home/rasika/Documents/Computational Biology/Project/Result'
-    # train_path = '/home/rasika/Documents/Computational Biology/Project/p1_train_pop_lab.csv'
+    raw_path_string = 'C:\\Users\\aditi\\Desktop\\Comp Bio\\test'
+    csv_path = 'C:\\Users\\aditi\\Desktop\\Comp Bio\\resulttestcenter'
+    train_path = 'C:\\Users\\aditi\\Desktop\\Comp Bio\\p1_train_pop_lab.csv'
 
 
     # make csv files from quant.sf files
@@ -160,5 +183,6 @@ df = pd.DataFrame(classifier_input)
 print "Created dataframe"
 print datetime.datetime.now()
 
-prediction_with_tree_classifier(df)
+#prediction_with_tree_classifier(df)
+prediction_with_pca(df)
 print datetime.datetime.now()
