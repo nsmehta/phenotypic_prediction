@@ -66,15 +66,15 @@ def decision_tree_classifier(X, y, X_new, to_predict):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.33, random_state = 42)
 
     #clf = tree.DecisionTreeClassifier(random_state=0, max_features=None)
-    clf = tree.DecisionTreeClassifier(max_features = None, criterion = 'entropy', splitter = 'best', max_depth = None, min_samples_split = 2, min_samples_leaf = 1)
+    clf = tree.DecisionTreeClassifier(max_features = None, criterion = 'entropy', splitter = 'best', max_depth = None, min_samples_split = 2, min_samples_leaf = 5)
     fit_model = clf.fit(X_train, y_train)
     output_pred = fit_model.predict(X_test)
     print("Prediction: ", output_pred)
     print("F1 score predicted w/o cross val", f1_score(y_test, output_pred, average='weighted'))
 
-    dot_data = tree.export_graphviz(fit_model, out_file=None, filled=True, rounded=True, special_characters=True)
-    graph = graphviz.Source(dot_data)
-    graph.render("output_1")
+    # dot_data = tree.export_graphviz(fit_model, out_file=None, filled=True, rounded=True, special_characters=True)
+    # graph = graphviz.Source(dot_data)
+    # graph.render("output_1")
 
     # f1 score
     scores = cross_val_score(clf, X, y, cv=5, scoring='f1_macro')
@@ -87,14 +87,72 @@ def decision_tree_classifier(X, y, X_new, to_predict):
     print "mean of accuracy", scores.mean()
 
 
+def eq_classes(raw_path_string, csv_path, train_path, slash):
+    colnames1 = ['Name', 'TPM', 'Length']
+
+    # make csv files from quant.sf files
+    make_csv.make_csv_files(raw_path_string + slash, csv_path, slash, colnames1)
+
+    classifier_input = list()
+
+    label_dict = {}
+    # store the labels from train file in a dictionary
+    train_data = pd.read_csv(train_path, sep=',', header=0, dtype='unicode')
+    for i, row in train_data.iterrows():
+        label_dict[row[0]] = (row[1], row[2])
+
+    classifier_input = list()
+
+    print "Starting reading csv files"
+    print datetime.datetime.now()
+
+    # create dataframe from all csv files
+    # each row corresponds to one accession number and the columns are TPM values of each transcript
+
+    # get the parsed equivalence classes data
+    accession_numbers = parse_eq_classes.get_features(raw_path_string)
+    print "Finished processing equivalence class"
+    print datetime.datetime.now()
+
+    seen = False
+    files = listdir(csv_path)
+    for file in files:
+        name = file.split('.')[0]
+        data = pd.read_csv(csv_path + slash + file, usecols=colnames1, converters={'TPM': float})
+
+        # get the unique transcripts for each accession number
+        unique_transcripts = accession_numbers[name]
+        df = pd.DataFrame(list(unique_transcripts.iteritems()), columns=['Name', 'Count'])
+
+        transcripts = list(unique_transcripts.keys())
+
+        data_list = [file] + df.Count.tolist() + data.TPM.tolist() + data.Length.tolist()
+        tpms = []
+
+        classifier_population = label_dict[name][0]
+        classifier_sequence_center = label_dict[name][1]
+        data_list = data_list + [classifier_population, classifier_sequence_center]
+        classifier_input.append(data_list)
+
+        print "Read all csv files, creating dataframe"
+        print datetime.datetime.now()
+
+        df = pd.DataFrame(classifier_input)
+
+        return df
+
+
 if __name__=='__main__':
     # raw_path_string = raw_input("Enter path where data is located (Location of accession number dirs): ")
     # csv_path = raw_input("Enter path of directory to store csv files: ")
     # train_path = raw_input("Enter path of train csv file (Path upto p1_train.csv): ")
-    raw_path_string = 'F:\\Computational Biology\\project\\train test'
-    csv_path = 'F:\\Computational Biology\\project\\Results test'
+    raw_path_string = 'F:\\Computational Biology\\project\\train'
+    csv_path = 'F:\\Computational Biology\\project\\Results'
     train_path = 'F:\\Computational Biology\\project\\p1_train_pop_lab.csv'
     slash = "\\"
+
+    eq_classes(raw_path_string, csv_path, train_path, slash)
+    exit(0)
     # slash = "/"
     # raw_path_string = '/home/rasika/Documents/Computational Biology/Project/Data'
     # csv_path = '/home/rasika/Documents/Computational Biology/Project/Result'
@@ -126,43 +184,20 @@ if __name__=='__main__':
     print "Finished processing equivalence class"
     print datetime.datetime.now()
 
-
     seen = False
     files = listdir(csv_path)
     for file in files:
         name = file.split('.')[0]
         data = pd.read_csv(csv_path + slash + file, usecols=colnames1, converters={'TPM': float})
-        data_list = [file] + data.TPM.tolist() + data.Length.tolist()
 
         # get the unique transcripts for each accession number
         unique_transcripts = accession_numbers[name]
+        df = pd.DataFrame(list(unique_transcripts.iteritems()), columns=['Name','Count'])
+
         transcripts = list(unique_transcripts.keys())
-        print type(transcripts)
-        print transcripts[0]
-        # exit(0)
-        # print(data.head())
-        # print(data.TPM.tolist())
-        # print(data_list[0])
-        # exit(0)
 
-        # traverse the
-
-
+        data_list = [file] + df.Count.tolist() + data.TPM.tolist() + data.Length.tolist()
         tpms = []
-
-        # tpms.append(data['TPM'].where(data['Name'] in transcripts))
-
-        # tpms.append(data.loc[data['Name'].isin(transcripts)])
-        # print('tpms :: ', len(tpms))
-
-        # dataframe of unique transcripts
-        data = pd.DataFrame([unique_transcripts])
-        print(data.head(1))
-        data_list = [name] + data[:, ].tolist()
-        # data_list = [name] + tpms
-        # if not seen:
-        #     print('data list', data_list)
-        #     seen = True
 
         classifier_population = label_dict[name][0]
         classifier_sequence_center = label_dict[name][1]
@@ -185,6 +220,7 @@ print datetime.datetime.now()
 #   .          .      .      .      .   ....       .        .
 
 df = pd.DataFrame(classifier_input)
+print df.head()
 
 
 print "Created dataframe"
