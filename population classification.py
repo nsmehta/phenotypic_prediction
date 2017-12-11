@@ -28,6 +28,7 @@ from sklearn.preprocessing import StandardScaler
 from modified_classification_eq_class import eq_classes
 
 
+
 def prediction_with_pca(df):
     print df.shape
     sc = StandardScaler()
