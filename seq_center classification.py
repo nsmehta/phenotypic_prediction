@@ -65,33 +65,6 @@ def crossval(df):
     print "F1 Score", f1
     print "accuracy", accuracy1
 
-def crossval(df):
-    df = np.array_split(df, 5)
-    f1_score1 = []
-    accuracy = []
-
-    for i in range(len(df)):
-        test = pd.DataFrame(df[i])
-        train = df[:i] + df[i + 1:]
-        train = pd.concat(train)
-        X_train = train.iloc[:, 1:-1]
-        y_train = pd.Series.to_frame(train.iloc[:, -1])
-        X_test = test.iloc[:, 1:-1]
-        y_test = pd.Series.to_frame(test.iloc[:, -1])
-        clf = tree.DecisionTreeClassifier(random_state=0, max_features=None, criterion='gini', splitter='best',
-                                          max_depth=None, min_samples_split=10, min_samples_leaf=5)
-        fit_model = clf.fit(X_train, y_train)
-        output_pred = fit_model.predict(X_test)
-        f1_score1.append(f1_score(y_test, output_pred, average='weighted'))
-        accuracy.append(accuracy_score(y_test, output_pred))
-
-    print "F1 scores with 5 fold cross validation for Seq C",f1_score1
-    print "accuracy scores with 5 fold cross validation for Seq C", accuracy
-    f1 = np.mean(f1_score1)
-    accuracy1 = np.mean(accuracy)
-    print "F1 Score", f1
-    print "accuracy", accuracy1
-
 # method for predicting only with random forest classifier
 def prediction_with_random_forest(df):
     random_forest_classifier(df.iloc[:, 1:-1], df.iloc[:, -1])
@@ -145,7 +118,7 @@ def decision_tree_classifier_seqcenter(X, y):
 
     # accuracy
     scores = cross_val_score(clf, X, y, cv=5, scoring='accuracy')
-    print "accuracy scores with 5 fold cross validation for Seq Center DT", scores
+    print "accuracy scores with 5 fold cross validation for Population DT", scores
     print "mean of accuracy", scores.mean()
 
     b = np.array([y])
@@ -197,6 +170,6 @@ if __name__ == '__main__':
 #
 # print "Created dataframe"
 # print datetime.datetime.now()
-df=eq_classes(raw_path_string, csv_path, train_path, slash)
-prediction_with_tree_classifier(df)
+df=eq_classes(raw_path_string, csv_path, train_path, slash, 'sequence')
+prediction_with_pca(df)
 print datetime.datetime.now()

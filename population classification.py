@@ -28,11 +28,10 @@ from sklearn.preprocessing import StandardScaler
 from modified_classification_eq_class import eq_classes
 
 
-
 def prediction_with_pca(df):
     print df.shape
     sc = StandardScaler()
-    X_std = sc.fit_transform(df.iloc[:, 1:-1])
+    X_std = sc.fit_transform(df.iloc[:, 1:-2])
     pca = PCA(n_components=1000, svd_solver='auto', random_state=0)
     # pca.fit(df.iloc[:, 1:-1])
     y = df.iloc[:, -1]
@@ -181,7 +180,7 @@ if __name__ == '__main__':
 # print datetime.datetime.now()
 
 #prediction_with_tree_classifier(df)
-df=eq_classes(raw_path_string, csv_path, train_path, slash)
+df=eq_classes(raw_path_string, csv_path, train_path, slash, 'population')
 prediction_with_pca(df)
 #b = np.array([y])
 #y = np.transpose(np.array(y))

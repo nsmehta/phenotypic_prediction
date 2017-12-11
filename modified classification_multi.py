@@ -11,6 +11,7 @@ from scipy.cluster.hierarchy import ward, dendrogram, linkage, fcluster, cophene
 import scipy.cluster.hierarchy as hier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import tree
+from sklearn.preprocessing import StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
@@ -24,6 +25,21 @@ from sklearn import tree
 # import graphviz
 import make_csv
 import datetime
+from sklearn.decomposition import PCA
+from modified_classification_eq_class import eq_classes
+
+
+def prediction_with_pca(df):
+    print df.shape
+    sc = StandardScaler()
+    X_std = sc.fit_transform(df.iloc[:, 1:-2])
+    pca = PCA(n_components=1000, svd_solver='auto', random_state=0)
+    # pca.fit(df.iloc[:, 1:-1])
+    y = df.iloc[:, -2:]
+    # y_numerical = pd.factorize(y)[0]
+    X_new = pca.fit_transform(X_std)
+    # random_forest_classifier(X_new, df.iloc[:, -1])
+    decision_tree_classifier_multi(X_new, y)
 
 
 def crossval(df):
@@ -109,66 +125,71 @@ def decision_tree_classifier_multi(X, y_2d):
 
 
 if __name__ == '__main__':
-    raw_path_string = raw_input("Enter path where data is located (Location of accession number dirs): ")
-    csv_path = raw_input("Enter path of directory to store csv files: ")
-    train_path = raw_input("Enter path of train csv file (Path upto p1_train.csv): ")
+    # raw_path_string = raw_input("Enter path where data is located (Location of accession number dirs): ")
+    # csv_path = raw_input("Enter path of directory to store csv files: ")
+    # train_path = raw_input("Enter path of train csv file (Path upto p1_train.csv): ")
     slash = "\\"
-    # raw_path_string = '/home/rasika/Documents/Computational Biology/Project/Data'
-    # csv_path = '/home/rasika/Documents/Computational Biology/Project/Result'
-    # train_path = '/home/rasika/Documents/Computational Biology/Project/p1_train_pop_lab.csv'
-    colnames1 = ['TPM', 'Length']
-    # make csv files from quant.sf files
-    make_csv.make_csv_files(raw_path_string + slash, csv_path, slash,['Name'] + colnames1)
+    raw_path_string = 'C:\\Users\\aditi\\Desktop\\Comp Bio\\train'
+    csv_path = 'C:\\Users\\aditi\\Desktop\\Comp Bio\\ResultsCenter'
+    train_path = 'C:\\Users\\aditi\\Desktop\\Comp Bio\\p1_train_pop_lab.csv'
+#     colnames1 = ['TPM', 'Length']
+#     # make csv files from quant.sf files
+#     make_csv.make_csv_files(raw_path_string + slash, csv_path, slash,['Name'] + colnames1)
+#
+#
+#     classifier_input = list()
+#
+#     label_dict = {}
+#     # store the labels from train file in a dictionary
+#     train_data = pd.read_csv(train_path, sep=',', header=0, dtype='unicode')
+#     for i, row in train_data.iterrows():
+#         label_dict[row[0]] = (row[1], row[2])
+#
+#     classifier_input = list()
+#
+#     print "Starting reading csv files"
+#     print datetime.datetime.now()
+#
+#     # create dataframe from all csv files
+#     # each row corresponds to one accession number and the columns are TPM values of each transcript
+#
+#     # Reading the data from csv files and creating a data list of acession number tpm and length
+#     files = listdir(csv_path)
+#     for file in files:
+#         name = file.split('.')[0]
+#         data = pd.read_csv(csv_path + slash + file, usecols=colnames1, converters={'TPM': float,'Length':float})
+#         data_list = [file] + data.TPM.tolist()+ data.Length.tolist()
+#     #Create label popluation and sequence center
+#         classifier_population = label_dict[name][0]
+#         classifier_sequence_center = label_dict[name][1]
+#         data_list = data_list + [classifier_population, classifier_sequence_center]
+#         classifier_input.append(data_list)
+#
+# print "Read all csv files, creating dataframe"
+# print datetime.datetime.now()
+#
+# # created dataframe will have following format
+#
+# # Name       TPM_1  TPM_2  TPM_3  TPM_4 ....  TPM_199324  label
+# # ERR188021  value  value  value  value ....     value     TSI
+# # ERR188022    .      .      .      .   ....       .       CEU
+# #   .          .      .      .      .   ....       .        .
+# #   .          .      .      .      .   ....       .        .
+# #   .          .      .      .      .   ....       .        .
+#
+# df = pd.DataFrame(classifier_input)
 
 
-    classifier_input = list()
 
-    label_dict = {}
-    # store the labels from train file in a dictionary
-    train_data = pd.read_csv(train_path, sep=',', header=0, dtype='unicode')
-    for i, row in train_data.iterrows():
-        label_dict[row[0]] = (row[1], row[2])
+# print "Created dataframe"
+# print datetime.datetime.now()
 
-    classifier_input = list()
-
-    print "Starting reading csv files"
-    print datetime.datetime.now()
-
-    # create dataframe from all csv files
-    # each row corresponds to one accession number and the columns are TPM values of each transcript
-
-    # Reading the data from csv files and creating a data list of acession number tpm and length
-    files = listdir(csv_path)
-    for file in files:
-        name = file.split('.')[0]
-        data = pd.read_csv(csv_path + slash + file, usecols=colnames1, converters={'TPM': float,'Length':float})
-        data_list = [file] + data.TPM.tolist()+ data.Length.tolist()
-
-        #Create label population and sequence center
-        classifier_population = label_dict[name][0]
-        classifier_sequence_center = label_dict[name][1]
-        data_list = data_list + [classifier_population, classifier_sequence_center]
-        classifier_input.append(data_list)
-
-print "Read all csv files, creating dataframe"
-print datetime.datetime.now()
-
-# created dataframe will have following format
-
-# Name       TPM_1  TPM_2  TPM_3  TPM_4 ....  TPM_199324  label
-# ERR188021  value  value  value  value ....     value     TSI
-# ERR188022    .      .      .      .   ....       .       CEU
-#   .          .      .      .      .   ....       .        .
-#   .          .      .      .      .   ....       .        .
-#   .          .      .      .      .   ....       .        .
-
-df = pd.DataFrame(classifier_input)
-
-print "Created dataframe"
-print datetime.datetime.now()
+df=eq_classes(raw_path_string, csv_path, train_path, slash, 'both')
+prediction_with_pca(df)
 
 # execute classifier
-prediction_with_tree_classifier(df)  # 0 for predicting population
+# prediction_with_pca(df)
+# prediction_with_tree_classifier(df)  # 0 for predicting population
 # prediction_with_tree_classifier(df, 1) # 1 for predicting sequence center
 # prediction_with_pca(df)
 # prediction_with_Kbest(df)
