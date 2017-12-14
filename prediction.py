@@ -12,7 +12,9 @@ from sklearn.feature_selection import SelectFromModel
 import make_csv
 import datetime
 from os import listdir
-
+import parse_eq_classes
+import pickle
+import sys
 
 def cross_val(df, folds, type, classifier):
 # type 1 = pop + seq center
@@ -25,6 +27,8 @@ def cross_val(df, folds, type, classifier):
 	accuracy_p  = []
 	f1_score1_c = []
 	accuracy_c  = []
+	f1_score = 0
+	accuracy = 0
 
 	for i in range(len(df)):
 	    test = pd.DataFrame(df[i])
@@ -90,6 +94,9 @@ def cross_val(df, folds, type, classifier):
 		print "Mean accuracy for Population", accuracy1
 		w_file.write(str("Mean F1 Score for Population" + f1 + '\n'))
 		w_file.write(str("Mean accuracy for Population" + accuracy1 + '\n'))
+		f1_score = f1
+		accuracy = accuracy1
+
 
 	elif type == 2:
 		f1_c = np.mean(f1_score1_c)
@@ -98,6 +105,9 @@ def cross_val(df, folds, type, classifier):
 		print "Mean accuracy for sequence center", accuracy1_c
 		w_file.write(str("Mean F1 Score for sequence center" + f1_c + '\n'))
 		w_file.write(str("Mean accuracy for sequence center" + accuracy1_c + '\n'))
+		f1_score = f1_c
+		accuracy = accuracy1_c
+
 	elif type == 1:
 		f1 = np.mean(f1_score1_p)
 		accuracy1 = np.mean(accuracy_p)
@@ -112,7 +122,10 @@ def cross_val(df, folds, type, classifier):
 		w_file.write(str("Mean accuracy for Population" + repr(accuracy1) + '\n'))
 		w_file.write(str("Mean F1 Score for sequence center" + repr(f1_c) + '\n'))
 		w_file.write(str("Mean accuracy sequence center" + repr(accuracy1_c) + '\n'))
+		f1_score = f1_c
+		accuracy = accuracy1_c
 
+	return f1_score, accuracy1_c
 
 
 def random_forest_classifier(X, y, df, column):
@@ -161,12 +174,12 @@ def decision_tree_classifier(X, y, df, column):
 	# b = np.array([y])
 	# X = np.hstack((X,b.T))
 	# df_new = pd.DataFrame(X)
-	cross_val(df, 5, column, 1)
+	return cross_val(df, 5, column, 1) # 5 is the number of folds
 
 
 def get_extra_trees_classifier(df, column):
 	clf = ExtraTreesClassifier(random_state=0)
-	y = df.iloc[:, -3]
+	y = df.iloc[:, -column]
 	y_numerical = pd.factorize(y)[0]
 	
 	clf = clf.fit(df.iloc[:, 1:-3], y_numerical)
@@ -183,25 +196,46 @@ def prediction_with_tree_classifier(df, column):
 
 	# perform classification using the selected features
 	# random_forest_classifier(X_new, y_numerical, df, column)
-	decision_tree_classifier(df.iloc[:, 1:-3], y_numerical, df, column)
+	return decision_tree_classifier(df.iloc[:, 1:-3], y_numerical, df, column)
 
 
 def predict_population(dataframe):
 	print('---------------------F1 score and Accuracy for Population------------------------')
 	w_file.write(str('\n---------------------F1 score and Accuracy for Population------------------------' + '\n'))
-	prediction_with_tree_classifier(dataframe, 3)
+	f1_score, accuracy = prediction_with_tree_classifier(dataframe, 3)
 
 
 def predict_sequence_center(dataframe):
 	print('---------------------F1 score and Accuracy for Sequence Center------------------------')
 	w_file.write(str('\n---------------------F1 score and Accuracy for Sequence Center------------------------' + '\n'))
-	prediction_with_tree_classifier(dataframe, 2)
+	f1_score, accuracy = prediction_with_tree_classifier(dataframe, 2)
 
 
 def predict_population_seq_center(dataframe):
 	print('---------------------F1 score and Accuracy for Population and Sequence Center------------------------')
 	w_file.write(str('---------------------F1 score and Accuracy for Population and Sequence Center------------------------' + '\n'))
-	prediction_with_tree_classifier(dataframe, 1)
+	f1_score, accuracy = prediction_with_tree_classifier(dataframe, 1)
+
+
+def prediction_with_pca(df):
+    sc = StandardScaler()
+    X_std = sc.fit_transform(df.iloc[:, 1:-3])
+    pca = PCA(n_components=0.9, svd_solver='full', random_state=0)
+    # pca.fit(df.iloc[:, 1:-1])
+    # y = df.iloc[:, -3:]
+    # y_numerical = pd.factorize(y)[0]
+    X_new = pca.fit_transform(X_std)
+    # random_forest_classifier(X_new, df.iloc[:, -1])
+    # decision_tree_classifier_multi(X_new, y)
+    return X_new
+
+
+# def predict_population_with_pca(df):
+# 	X_new = prediction_with_pca(df)
+# 	def predict_population(dataframe):
+# 	print('---------------------F1 score and Accuracy for Population with PCA------------------------')
+# 	w_file.write(str('\n---------------------F1 score and Accuracy for Population with PCA------------------------' + '\n'))
+# 	decision_tree_classifier(X_new, y_numerical, df, 3)
 
 
 def create_dataframe(files, features, col_names):
@@ -225,18 +259,24 @@ def create_dataframe(files, features, col_names):
 	return df
 
 
-if __name__ == '__main__':
+def main():
+	args = sys.argv
 
-	raw_path_string = raw_input("Enter path where data is located (Location of accession number dirs): ")
-	csv_path = raw_input("Enter path of directory to store csv files: ")
-	train_path = raw_input("Enter path of train csv file (Path upto p1_train.csv): ")
-	# raw_path_string = 'F:\\Computational Biology\\project\\train'
-	# csv_path = 'F:\\Computational Biology\\project\\Results all'
-	# train_path = 'F:\\Computational Biology\\project\\p1_train_pop_lab.csv'
-	slash = "\\"
+	model_dump_path = args[1]
+	raw_path_string = args[2]
+	csv_path = args[3]
+	train_path = args[4]
+	slash = args[5]
+	eq_class = args[6]
 
-	w_file = open('F:\\Computational Biology\\project\\result_report.txt', 'a')
-	w_file.write('\n\n' + str(datetime.datetime.now()))
+	print('args', model_dump_path, raw_path_string, csv_path, train_path, slash)
+
+	# slash = "/"
+	# eq_class = True
+	df = None
+
+	# w_file = open('/home/rasika/Documents/Computational Biology/Project/output_file.txt', 'a')
+	# w_file.write('\n\n' + str(datetime.datetime.now()))
 	col_names = ['TPM', 'Length', 'EffectiveLength', 'NumReads']
 
 	# make csv files from quant.sf files
@@ -253,7 +293,13 @@ if __name__ == '__main__':
 
 	# Reading the data from csv files and creating a data list of acession number, tpm, length and effective length
 	files = listdir(csv_path)
-	df = create_dataframe(files, ['TPM', 'Length', 'EffectiveLength', 'NumReads'], col_names)
+	if not eq_class:
+		df = create_dataframe(files, ['TPM', 'Length',], col_names)
+	else:
+		df = parse_eq_classes.create_dataframe_with_eq_class(raw_path_string, csv_path, train_path, slash, label_dict)
+		print('back from creation')
+
+	print(df.head())
 
 	print "Read all csv files, created dataframe"
 	print datetime.datetime.now()
@@ -267,6 +313,13 @@ if __name__ == '__main__':
 	#   .          .      .      .      .   ....       .        .
 
 	w_file.write("\n Predicting for Population, Sequence Center and Both on full data: TPM, Length, Effective Length, NumReads\n")
-	predict_population(df)
-	predict_sequence_center(df)
-	predict_population_seq_center(df)
+
+
+	f1_score_p, accuracy_p = predict_population(df)
+	f1_score_sc, accuracy_sc = predict_sequence_center(df)
+	f1_score_p_sc, accuracy_p_sc = predict_population_seq_center(df)
+	
+	# predict_population_with_pca(df)
+	# predict_sequence_center_with_pca(df)
+	# predict_population_seq_center_with_pca(df)
+
