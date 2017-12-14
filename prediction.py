@@ -92,8 +92,8 @@ def cross_val(df, folds, type, classifier):
 		accuracy1 = np.mean(accuracy_p)		
 		print "Mean F1 Score for Population", f1
 		print "Mean accuracy for Population", accuracy1
-		w_file.write(str("Mean F1 Score for Population" + f1 + '\n'))
-		w_file.write(str("Mean accuracy for Population" + accuracy1 + '\n'))
+		# w_file.write(str("Mean F1 Score for Population" + f1 + '\n'))
+		# w_file.write(str("Mean accuracy for Population" + accuracy1 + '\n'))
 		f1_score = f1
 		accuracy = accuracy1
 
@@ -103,8 +103,8 @@ def cross_val(df, folds, type, classifier):
 		accuracy1_c = np.mean(accuracy_c)
 		print "Mean F1 Score for sequence center", f1_c
 		print "Mean accuracy for sequence center", accuracy1_c
-		w_file.write(str("Mean F1 Score for sequence center" + f1_c + '\n'))
-		w_file.write(str("Mean accuracy for sequence center" + accuracy1_c + '\n'))
+		# w_file.write(str("Mean F1 Score for sequence center" + f1_c + '\n'))
+		# w_file.write(str("Mean accuracy for sequence center" + accuracy1_c + '\n'))
 		f1_score = f1_c
 		accuracy = accuracy1_c
 
@@ -118,10 +118,10 @@ def cross_val(df, folds, type, classifier):
 		print "Mean F1 Score for sequence center", f1_c
 		print "Mean accuracy sequence center", accuracy1_c
 
-		w_file.write(str("Mean F1 Score for Population" + repr(f1) + '\n'))
-		w_file.write(str("Mean accuracy for Population" + repr(accuracy1) + '\n'))
-		w_file.write(str("Mean F1 Score for sequence center" + repr(f1_c) + '\n'))
-		w_file.write(str("Mean accuracy sequence center" + repr(accuracy1_c) + '\n'))
+		# w_file.write(str("Mean F1 Score for Population" + repr(f1) + '\n'))
+		# w_file.write(str("Mean accuracy for Population" + repr(accuracy1) + '\n'))
+		# w_file.write(str("Mean F1 Score for sequence center" + repr(f1_c) + '\n'))
+		# w_file.write(str("Mean accuracy sequence center" + repr(accuracy1_c) + '\n'))
 		f1_score = f1_c
 		accuracy = accuracy1_c
 
@@ -135,22 +135,22 @@ def random_forest_classifier(X, y, df, column):
 	scores = cross_val_score(clf, X, y, cv = 5, scoring = 'f1_macro')
 	print "F1 scores with 5 fold cross validation for Population RF ", scores
 	print "F1 score", scores.mean()
-	w_file.write(str("F1 scores with 5 fold cross validation for Population RF " + scores + '\n'))
-	w_file.write(str("F1 score", scores.mean() + '\n'))
+	# w_file.write(str("F1 scores with 5 fold cross validation for Population RF " + scores + '\n'))
+	# w_file.write(str("F1 score", scores.mean() + '\n'))
 
 	# accuracy
 	scores = cross_val_score(clf, X, y, cv = 5, scoring = 'accuracy')
 	print "accuracy scores with 5 fold cross validation for Population RF", scores
 	print "mean of accuracy", scores.mean()
-	w_file.write(str("accuracy scores with 5 fold cross validation for Population RF" + scores + '\n'))
-	w_file.write(str("mean of accuracy" + repr(scores.mean()) + '\n'))
+	# w_file.write(str("accuracy scores with 5 fold cross validation for Population RF" + scores + '\n'))
+	# w_file.write(str("mean of accuracy" + repr(scores.mean()) + '\n'))
 
 	cross_val(df, 5, column, 0)
 
 
 def decision_tree_classifier(X, y, df, column):
 	print('Starting decision tree classifier')
-	w_file.write(str('Decision tree classifier' + '\n'))
+	# w_file.write(str('Decision tree classifier' + '\n'))
 	X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 42)
 
 	clf = tree.DecisionTreeClassifier(max_features = None, criterion = 'gini', splitter = 'best', max_depth = None, min_samples_split = 2, min_samples_leaf = 5, class_weight = 'balanced')
@@ -158,9 +158,9 @@ def decision_tree_classifier(X, y, df, column):
 	output_pred = fit_model.predict(X_test)
 
 	print("F1 score predicted w/o cross val DT :: ", f1_score(y_test, output_pred, average='weighted'))
-	w_file.write(str("F1 score predicted w/o cross val DT :: "))
-	w_file.write("%s" % f1_score(y_test, output_pred, average='weighted'))
-	w_file.write('\n')
+	# w_file.write(str("F1 score predicted w/o cross val DT :: "))
+	# w_file.write("%s" % f1_score(y_test, output_pred, average='weighted'))
+	# w_file.write('\n')
 
 	# scores = cross_val_score(clf, X, y, cv=5, scoring='f1_macro')
 	# print "F1 scores with 5 fold cross validation", scores
@@ -201,19 +201,19 @@ def prediction_with_tree_classifier(df, column):
 
 def predict_population(dataframe):
 	print('---------------------F1 score and Accuracy for Population------------------------')
-	w_file.write(str('\n---------------------F1 score and Accuracy for Population------------------------' + '\n'))
+	# w_file.write(str('\n---------------------F1 score and Accuracy for Population------------------------' + '\n'))
 	f1_score, accuracy = prediction_with_tree_classifier(dataframe, 3)
 
 
 def predict_sequence_center(dataframe):
 	print('---------------------F1 score and Accuracy for Sequence Center------------------------')
-	w_file.write(str('\n---------------------F1 score and Accuracy for Sequence Center------------------------' + '\n'))
+	# w_file.write(str('\n---------------------F1 score and Accuracy for Sequence Center------------------------' + '\n'))
 	f1_score, accuracy = prediction_with_tree_classifier(dataframe, 2)
 
 
 def predict_population_seq_center(dataframe):
 	print('---------------------F1 score and Accuracy for Population and Sequence Center------------------------')
-	w_file.write(str('---------------------F1 score and Accuracy for Population and Sequence Center------------------------' + '\n'))
+	# w_file.write(str('---------------------F1 score and Accuracy for Population and Sequence Center------------------------' + '\n'))
 	f1_score, accuracy = prediction_with_tree_classifier(dataframe, 1)
 
 
@@ -312,7 +312,7 @@ def main():
 	#   .          .      .      .      .   ....       .        .
 	#   .          .      .      .      .   ....       .        .
 
-	w_file.write("\n Predicting for Population, Sequence Center and Both on full data: TPM, Length, Effective Length, NumReads\n")
+	# w_file.write("\n Predicting for Population, Sequence Center and Both on full data: TPM, Length, Effective Length, NumReads\n")
 
 
 	f1_score_p, accuracy_p = predict_population(df)
