@@ -41,19 +41,16 @@ def create_dataframe_with_eq_class(raw_path_string, csv_path, train_path, slash,
 	df = None
 
 	a_file = open('/home/rasika/Documents/Computational Biology/Project/Features/dataframe.csv', 'r')
-	print('inside create df')
 
 	# test = open('/home/rasika/Documents/Computational Biology/Project/Features/test.txt', 'w')
 	if not len(a_file.readlines()) > 0:
 		classifier_input = list()
 		col_names = ['Name', 'TPM', 'Length', 'EffectiveLength', 'NumReads']
 
-		print('in if')
 	    # get the parsed equivalence classes data
 		accession_numbers = get_features(raw_path_string, slash)
-		print "Finished processing equivalence class"
 		print datetime.datetime.now()
-		print('got features from eq class')
+
 		seen = False
 		files = listdir(csv_path)
 		for file in files:
@@ -77,14 +74,6 @@ def create_dataframe_with_eq_class(raw_path_string, csv_path, train_path, slash,
 
 			classifier_input.append(data_list)
 
-			if not seen:			    
-			    print(df.head())
-			    print(data.head())
-			    print(len(classifier_input))
-			    # print('data list', data_list)
-			    seen = True
-			print('append', name, len(data_list))
-			# break
 		print "Read all csv files, creating dataframe"
 		print datetime.datetime.now()
 
@@ -92,7 +81,5 @@ def create_dataframe_with_eq_class(raw_path_string, csv_path, train_path, slash,
 
 		df.to_csv('/home/rasika/Documents/Computational Biology/Project/Features/dataframe.csv', index=False)
 	else:
-		print('in else')
 		df = pd.read_csv('/home/rasika/Documents/Computational Biology/Project/Features/dataframe.csv', sep=',', header=0, dtype='unicode')
-		print('after read csv')
 	return df
