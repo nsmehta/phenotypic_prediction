@@ -271,8 +271,7 @@ def main():
 
 	print('args', model_dump_path, raw_path_string, csv_path, train_path, slash)
 
-	# slash = "/"
-	# eq_class = True
+	scores = {}
 	df = None
 
 	# w_file = open('/home/rasika/Documents/Computational Biology/Project/output_file.txt', 'a')
@@ -316,10 +315,16 @@ def main():
 
 
 	f1_score_p, accuracy_p = predict_population(df)
+	scores['Population'] = (f1_score_p, accuracy_p)
+
 	f1_score_sc, accuracy_sc = predict_sequence_center(df)
-	f1_score_p_sc, accuracy_p_sc = predict_population_seq_center(df)
+	scores['Sequence Center'] = (f1_score_sc, accuracy_sc)
 	
+	f1_score_p_sc, accuracy_p_sc = predict_population_seq_center(df)
+	scores['Population and Sequence Center'] = (f1_score_p_sc, accuracy_p_sc)
+
 	# predict_population_with_pca(df)
 	# predict_sequence_center_with_pca(df)
 	# predict_population_seq_center_with_pca(df)
 
+scores = main()
